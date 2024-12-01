@@ -31,19 +31,11 @@ int main() {
     }
 
     int distance = 0;
-    while (!leftList.empty()) {
-        std::vector<int>::iterator leftMinIterator = std::min_element(leftList.begin(), leftList.end());
-        int leftIndex = std::distance(std::begin(leftList), leftMinIterator);
+    std::sort(leftList.begin(), leftList.end());
+    std::sort(rightList.begin(), rightList.end());
 
-
-        std::vector<int>::iterator rightMinIterator = std::min_element(rightList.begin(), rightList.end());
-        int rightIndex = std::distance(std::begin(rightList), rightMinIterator);
-
-        int difference = abs(leftList.at(leftIndex) - rightList.at(rightIndex));
-        distance += difference;
-
-        leftList.erase(leftMinIterator);
-        rightList.erase(rightMinIterator);
+    for(int i=0; i < leftList.size(); i++) {
+        distance += abs(leftList.at(i) - rightList.at(i));
     }
     
     std::cout << "Distance is: " << distance << std::endl;
