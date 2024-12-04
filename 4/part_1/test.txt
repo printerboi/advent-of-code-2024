@@ -1,0 +1,38 @@
+        NE:  0,3
+        NE:  0,4
+        NE:  0,5
+        NE:  0,8
+        NE:  1,1
+        NE:  1,4
+        NE:  1,6
+        NE:  1,8
+        NE:  2,2
+        NE:  2,3
+        NE:  2,4
+        NE:  3,1
+        NE:  3,5
+        NE:  3,7
+        NE:  3,9
+        NE: XSXM 4,0
+        NE: SAMS 4,3
+        NE: XSMA 4,6
+        NE: XMAS 5,0
+        NE: XAMX 5,1
+        NE: XXSM 5,5
+        NE: XAMM 5,6
+        NE: SXAM 6,0
+        NE: SMAS 6,2
+        NE: SXXS 6,4
+        NE: SAMX 6,6
+        NE:  6,7
+        NE:  6,8
+        NE:  6,9
+        NE: SMAS 7,0
+        NE: XMMM 7,2
+        NE: SXMM 7,6
+        NE: XSXM 8,5
+        NE: XMAS 9,1
+        NE: XMAS 9,3
+        NE: XMAS 9,5
+        NE:  9,8
+        NE:  9,9
