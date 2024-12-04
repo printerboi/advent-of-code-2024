@@ -28,7 +28,7 @@ int starSearch(std::vector<std::vector<char>> &mem) {
                     east = { mem[i][j], mem[i][j+1], mem[i][j+2], mem[i][j+3] };
                 }
 
-                if ( j > 3 ) {
+                if ( j > 2 ) {
                     west = { mem[i][j-3], mem[i][j-2], mem[i][j-1], mem[i][j] };
                 }
 
@@ -36,11 +36,11 @@ int starSearch(std::vector<std::vector<char>> &mem) {
                     south = { mem[i][j], mem[i+1][j], mem[i+2][j], mem[i+3][j] };
                 }
 
-                if ( i > 3 ) {
+                if ( i > 2 ) {
                     north = { mem[i-3][j], mem[i-2][j], mem[i-1][j], mem[i][j] };
                 }
 
-                if ( j < mem.at(i).size()-3 && i > 3 ) {
+                if ( j < mem.at(i).size()-3 && i > 2 ) {
                     ne = { mem[i][j], mem[i-1][j+1], mem[i-2][j+2], mem[i-3][j+3]};
                 }
 
@@ -48,11 +48,11 @@ int starSearch(std::vector<std::vector<char>> &mem) {
                     es = { mem[i][j], mem[i+1][j+1], mem[i+2][j+2], mem[i+3][j+3]};
                 }
 
-                if ( j > 3 && i < mem.size()-3 ) {
+                if ( j > 2 && i < mem.size()-3 ) {
                     sw = { mem[i][j], mem[i+1][j-1], mem[i+2][j-2], mem[i+3][j-3]};
                 }
 
-                if ( i > 3 && j > 3 ) {
+                if ( i > 2 && j > 2 ) {
                     wn = { mem[i][j], mem[i-1][j-1], mem[i-2][j-2], mem[i-3][j-3]};
                 }
 
@@ -83,7 +83,7 @@ int starSearch(std::vector<std::vector<char>> &mem) {
 int main() {
     // Parse the file
     std::vector<std::vector<char>> mem;
-    std::ifstream file("example.txt");
+    std::ifstream file("input.txt");
     std::string   line;
 
     while ( std::getline(file, line) ) {
