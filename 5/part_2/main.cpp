@@ -9,12 +9,12 @@
 #include <cassert>
 #include <bits/stdc++.h>
 
-std::map<int, std::vector<int>> rules;
+std::vector<std::pair<int, int>> rules;
 std::vector<std::vector<int>> updates;
 
 void parseRules() {
     // Parse the file
-    std::ifstream file("example_rules.txt");
+    std::ifstream file("input_rules.txt");
     std::string   line;
 
     while ( std::getline(file, line) ) {
@@ -25,21 +25,13 @@ void parseRules() {
         std::string rule = line.substr(line.find('|')+1, line.length());
 
 
-        rules[atoi(key.c_str())].push_back(atoi(rule.c_str()));
+        rules.push_back(std::pair<int, int>(atoi(key.c_str()), atoi(rule.c_str())));
     }
-
-/*     for(auto const &r : rules) {
-        std::cout << "Key: " << r.first << "|";
-        for(auto const &a : r.second) {
-            std::cout << a << ", ";
-        }
-        std::cout << std::endl;
-    } */
 }
 
 void parseUpdates() {
     // Parse the file
-    std::ifstream file("example_q.txt");
+    std::ifstream file("input_q.txt");
     std::string   line;
 
     while ( std::getline(file, line) ) {
@@ -47,151 +39,50 @@ void parseUpdates() {
         std::string word;
         std::vector<int> row;
 
-        //std::cout << linestream.str() << std::endl;
-
         while( linestream.good() ) {
             std::string substr;
             std::getline( linestream, substr, ',' );
             row.push_back( atoi(substr.c_str()) );
         }
 
-        /* for(int elm : row) {
-            std::cout << elm << ", ";
-        }
-
-        std::cout << std::endl; */
-
         updates.push_back(row);
     }
 }
 
-bool fine(std::vector<std::vector<int>> &up) {
-    bool evfine = true;
+bool isRuleInValid(std::vector<int> row, std::pair<int, int> rule) {
+    auto itkey = std::find(row.begin(), row.end(), rule.first);
+    auto itval = std::find(row.begin(), row.end(), rule.second);
 
-    for(auto row: up) {
-        bool applies = true;
+    // Check if both numbers are contained
+    if(itkey != row.end() && itval != row.end()) {
+        int indexKey = itkey - row.begin();
+        int indexVal = itval - row.begin();
 
-        for(auto rule: rules) {
-            int key = rule.first;
-            std::vector<int> values = rule.second;
-
-            for(auto val : values) {
-                auto itkey = std::find(row.begin(), row.end(), key);
-                auto itval = std::find(row.begin(), row.end(), val);
-
-                // Check if both numbers are contained
-                if(itkey != row.end() && itval != row.end()) {
-                    int indexKey = itkey - row.begin();
-                    int indexVal = itval - row.begin();
-
-                    //std::cout << "Between " << indexKey << " and " << indexVal << std::endl;
-
-                    if(indexKey < indexVal) {
-                        std::cout << "Violation in ";
-                        for(int elm : row) {
-                            std::cout << elm << ", ";
-                        }
-                        std::cout << "Between " << key << " and " << val << std::endl;
-
-                        applies = false;
-                    }
-                }
-            }
-        }
-
-        evfine = evfine & applies;
-    }
-
-    return evfine;
-}
-
-std::vector<std::vector<int>> resort(std::vector<std::vector<int>> *up){
-    std::vector<std::vector<int>> corordered;
-    
-    for(auto row: *up) {
-        bool applies = true;
-
-        for(auto rule: rules) {
-            int key = rule.first;
-            std::vector<int> values = rule.second;
-
-            for(auto val : values) {
-                auto itkey = std::find(row.begin(), row.end(), key);
-                auto itval = std::find(row.begin(), row.end(), val);
-
-                // Check if both numbers are contained
-                if(itkey != row.end() && itval != row.end()) {
-                    int indexKey = itkey - row.begin();
-                    int indexVal = itval - row.begin();
-
-                    //std::cout << "Between " << indexKey << " and " << indexVal << std::endl;
-
-                    if(indexKey > indexVal) {
-                        for(int elm : row) {
-                            std::cout << elm << ", ";
-                        }
-
-                        std::iter_swap(row.begin() + indexKey, row.begin() + indexVal);
-
-
-                        applies = false;
-                    }
-                }
-            }
-        }
-
-        if(!applies) {
-            corordered.push_back(row);
+        if(indexKey > indexVal) {
+            return true;
         }
     }
 
-    return corordered;
-    
+    return false;
 }
 
-std::vector<std::vector<int>> ruleDoesNotApply(std::vector<std::vector<int>> &up){
-    std::vector<std::vector<int>> corordered;
-    
-    for(auto row: up) {
-        bool applies = true;
+std::vector<int> resort(std::vector<int> &row, std::pair<int, int> rule) {
+    auto itkey = std::find(row.begin(), row.end(), rule.first);
+    auto itval = std::find(row.begin(), row.end(), rule.second);
 
-        for(auto rule: rules) {
-            int key = rule.first;
-            std::vector<int> values = rule.second;
+    // Check if both numbers are contained
+    if(itkey != row.end() && itval != row.end()) {
+        int indexKey = itkey - row.begin();
+        int indexVal = itval - row.begin();
 
-            for(auto val : values) {
-                auto itkey = std::find(row.begin(), row.end(), key);
-                auto itval = std::find(row.begin(), row.end(), val);
-
-                // Check if both numbers are contained
-                if(itkey != row.end() && itval != row.end()) {
-                    int indexKey = itkey - row.begin();
-                    int indexVal = itval - row.begin();
-
-                    //std::cout << "Between " << indexKey << " and " << indexVal << std::endl;
-
-                    if(indexKey > indexVal) {
-                        std::cout << "Violation in ";
-                        for(int elm : row) {
-                            std::cout << elm << ", ";
-                        }
-                        std::cout << "Between " << key << " and " << val << std::endl;
-
-
-                        applies = false;
-                    }
-                }
-            }
-        }
-
-        if(!applies) {
-            corordered.push_back(row);
+        if(indexKey > indexVal) {
+            std::swap(row[indexKey], row[indexVal]);
         }
     }
 
-    return corordered;
-    
+    return row;
 }
+
 
 int main() {
     long sum = 0; 
@@ -199,16 +90,49 @@ int main() {
     parseRules();
     parseUpdates();
 
-    std::vector<std::vector<int>> doesNotApplyTo = ruleDoesNotApply(updates);
-    while(!fine(doesNotApplyTo)) {
-        resort(&doesNotApplyTo);
+    std::vector<std::vector<int>> doesNotApply;
+
+    std::copy_if(updates.begin(), updates.end(), std::back_inserter(doesNotApply), 
+        [](std::vector<int> i){
+            bool inValid = false;
+            for(auto rule : rules) {
+                bool check = isRuleInValid(i, rule);
+                inValid = inValid || isRuleInValid(i, rule);
+                if(check) {
+                    //std::cout << rule.first << ", " << rule.second << std::endl;
+                }
+            }
+            return inValid;
+        } 
+    );
+
+    std::vector<bool> validity;
+
+    for(int i = 0; i < doesNotApply.size(); i++) {
+        validity.push_back(false);
     }
 
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
+    for(int i = 0; i < doesNotApply.size(); i++) {
+        bool allrulesapply = false;
+        while(!allrulesapply) {
+            int errors = 0;
+            for(auto rule : rules) {
+                bool invalid = isRuleInValid(doesNotApply[i], rule);
+                //std::cout << i << ":" << invalid << std::endl;
 
-    for (std::vector<int> row : doesNotApplyTo) {
+                if(invalid) {
+                   doesNotApply[i] = resort(doesNotApply[i], rule);
+                   errors++;
+                }
+            }
+
+            allrulesapply = errors == 0;
+            std::cout << allrulesapply << std::endl;
+        }
+    }
+    
+
+    for (std::vector<int> row : doesNotApply) {
         for(int elm : row) {
             std::cout << elm << ", ";
         }
@@ -216,7 +140,11 @@ int main() {
         std::cout << std::endl;
     }
 
-    for (std::vector<int> row : doesNotApplyTo) {
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
+
+    for (std::vector<int> row : doesNotApply) {
         auto mid = row.begin() + row.size() / 2;
         sum += *mid;
         std::cout << "mid: " << *mid << std::endl; 
