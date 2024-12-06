@@ -3,6 +3,10 @@
 Character::Character(std::pair<int, int> pos, DIRECTION dir) {
   this->pos = pos;
   this->dir = dir;
+
+  this->initPos = this->pos;
+  this->initDir = this->dir;
+
 }
 
 void Character::turnRight() {
@@ -25,4 +29,9 @@ void Character::turnRight() {
     this->dir = DIRECTION::TOP;
     return;
   }
+}
+
+void Character::reset() {
+  this->pos = this->initPos;
+  this->dir = this->initDir;
 }

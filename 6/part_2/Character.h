@@ -11,9 +11,13 @@ enum class DIRECTION {
 class Character {
 public:
   std::pair<int, int> pos;
+  std::pair<int, int> initPos;
   DIRECTION dir;
+  DIRECTION initDir;
 
   Character(std::pair<int, int> pos, DIRECTION dir);
 
   void turnRight();
+
+  void reset();
 };
