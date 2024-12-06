@@ -140,7 +140,6 @@ int main() {
   int loopcount = 0;
   parseFile();
 
-  #pragma omp parallel for
   for(int i = 0; i < globalmap.size(); i++) {
     std::cout << "Heartbeat(" << i << ")" << std::endl;
     for(int j = 0; j < globalmap.at(0).size(); j++) {
