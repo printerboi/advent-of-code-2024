@@ -10,7 +10,7 @@
 #include <bits/stdc++.h>
 #include <bitset>
 
-#define FILENAME "example.txt"
+#define FILENAME "input.txt"
 
 struct FileData {
     int id;
@@ -62,113 +62,8 @@ void decode() {
     return;
 }
 
-void compress() {
-    for (int i = 0; i < decoded.size(); i++) {
-        if (decoded[i].id == -1) {
-            int blockcounter = 0;
-
-            while (decoded[i].length > 0) {
-                int k = decoded[i].length;
-
-                int j = decoded.size() - 1;
-                int found = -1;
-
-                while (j > i && found == -1) {
-                    //std::cout << "[" << decoded[j] << "] -> " << i  << std::endl;
-                    if (decoded[j].id != -1) {
-                        found = j;
-                    }else{
-                        j--;
-                    }
-
-                }
-                auto d = decoded[i];
-                auto e = decoded[found];
-                if (found != -1) {
-                    if (decoded[found].length <= decoded[i].length - k) {
-                        compressed.push_back(decoded[found]);
-                        k = k + decoded[found].length - 1;
-                        decoded.erase(decoded.begin() + found);
-                        blockcounter = k;
-                    }else {
-                        int used = k;
-                        if (k < decoded[found].length) {
-                            compressed.push_back({ decoded[found].id, k });
-                            blockcounter = k;
-                            decoded[i].length -= k;
-                        }else {
-                            compressed.push_back({ decoded[found].id, decoded[found].length });
-                            blockcounter += decoded[found].length ;
-                            decoded[i].length -= decoded[found].length;
-                        }
-
-                        decoded[found].length -= used;
-                        if (decoded[found].length <= 0) {
-                            decoded.erase(decoded.begin() + found);
-                        }
-                    }
-
-                }
-            }
-        }else {
-            compressed.push_back(decoded[i]);
-        }
-
-        for(auto f : decoded) {
-            if (f.id != -1) {
-                for (int i = 0; i < f.length; i++) {
-                    std::cout << f.id;
-                }
-            }else {
-                for (int i = 0; i < f.length; i++) {
-                    std::cout << ".";
-                }
-            }
-        }
-        std::cout << std::endl;
-
-        for(auto f : compressed) {
-            if (f.id != -1) {
-                for (int i = 0; i < f.length; i++) {
-                    std::cout << f.id;
-                }
-            }else {
-                for (int i = 0; i < f.length; i++) {
-                    std::cout << ".";
-                }
-            }
-        }
-        std::cout << std::endl;
-    }
-}
-
-long long checksum() {
-    long long sum = 0;
-    int id=0;
-
-    for (int i = 0; i < compressed.size(); i++) {
-        for (int k = 0; k <= compressed[i].length; k++) {
-            sum += compressed[i].id * id;
-
-            id++;
-        }
-    }
-
-    return sum;
-}
-
-int main() {
-    std::cout << "Parsing" << std::endl;
-    parseInput();
-    std::cout << "Length: " << drive.size() << std::endl;
-    //calculate();
-    print();
-    std::cout << "Decoding" << std::endl;
-    decode();
-    std::cout << "Length: " << decoded.size() << std::endl;
-
-
-    /*for(auto f : decoded) {
+void printDecoded() {
+    for(auto f : decoded) {
         if (f.id != -1) {
             for (int i = 0; i < f.length; i++) {
                 std::cout << f.id;
@@ -179,13 +74,10 @@ int main() {
             }
         }
     }
-    std::cout << std::endl;*/
+    std::cout << std::endl;
+}
 
-    std::cout << "Compressing" << std::endl;
-    compress();
-    std::cout << "Length: " << compressed.size() << std::endl;
-
-
+void printCompressed() {
     for(auto f : compressed) {
         if (f.id != -1) {
             for (int i = 0; i < f.length; i++) {
@@ -198,10 +90,80 @@ int main() {
         }
     }
     std::cout << std::endl;
+}
+
+void compress() {
+    while (decoded.size() > 1) {
+        //printDecoded();
+
+        if (decoded[0].id != -1) {
+            compressed.push_back(decoded[0]);
+            decoded.erase(decoded.begin());
+        } else {
+            FileData nextToInsert = decoded[decoded.size() - 1];
+            while (nextToInsert.id == -1) {
+                decoded.pop_back();
+                nextToInsert = decoded[decoded.size() - 1];
+            }
+
+            int howMuchToInsert = decoded[0].length;
+            if (howMuchToInsert >= nextToInsert.length) {
+                compressed.push_back(nextToInsert);
+                decoded.erase(decoded.end() - 1);
+                decoded[0].length -= nextToInsert.length;
+            }else {
+                compressed.push_back({nextToInsert.id, howMuchToInsert});
+                decoded[decoded.size() - 1].length -= howMuchToInsert;
+                decoded[0].length = 0;
+            }
+
+            if (decoded[0].length == 0) {
+                decoded.erase(decoded.begin());
+            }
+        }
+
+        //printCompressed();
+    }
+
+    if (decoded.size() == 1) {
+        if (decoded[0].id != -1) {
+            compressed.push_back(decoded[0]);
+        }else {
+            decoded.clear();
+        }
+    }
+}
+
+long long checksum() {
+    long long sum = 0;
+    int id=0;
+
+    for (int i = 0; i < compressed.size(); i++) {
+        for (int k = 0; k < compressed[i].length; k++) {
+            auto c = compressed[i];
+            sum += compressed[i].id * id;
+
+            id++;
+        }
+    }
+
+    return sum;
+}
+
+int main() {
+    std::cout << "Parsing" << std::endl;
+    parseInput();
+
+    std::cout << "Decoding" << std::endl;
+    decode();
+
+    std::cout << "Compressing" << std::endl;
+    compress();
+
 
     std::cout << "Calculating checksum" << std::endl;
     long long chs = checksum();
-    std::cout << chs << std::endl;
+    std::cout << "Result: " << chs << std::endl;
 
     return 0;
 }
