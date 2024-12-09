@@ -10,7 +10,7 @@
 #include <bits/stdc++.h>
 #include <bitset>
 
-#define FILENAME "example.txt"
+#define FILENAME "input.txt"
 
 struct FileData {
     int id;
@@ -109,15 +109,25 @@ int findNextFittingFile(int idcounter, int size) {
 
 
 void compress() {
-    int idCounter = 0;
     for (int i = decoded.size() - 1; i > 0; i--) {
         if (decoded[i].id != -1) {
             int j = findNextFittingFile(i, decoded[i].length);
-            decoded[j].length -= decoded[i].length;
-            decoded.insert(decoded.begin() + j, { decoded[i].id, decoded[i].length });
+            if (j != -1) {
+                FileData filled = { decoded[i].id, decoded[i].length };
+                FileData freespace = { -1, decoded[j].length - decoded[i].length };
+
+                decoded[j] = freespace;
+                decoded.insert(decoded.begin() + j, filled);
+
+                decoded[i+1].id = -1;
+
+            }
+
         }
-        printDecoded();
+        //printDecoded();
     }
+
+    compressed = decoded;
 }
 
 long long checksum() {
@@ -125,11 +135,15 @@ long long checksum() {
     int id=0;
 
     for (int i = 0; i < compressed.size(); i++) {
-        for (int k = 0; k < compressed[i].length; k++) {
-            auto c = compressed[i];
-            sum += compressed[i].id * id;
+        if (decoded[i].id != -1) {
+            for (int k = 0; k < compressed[i].length; k++) {
+                auto c = compressed[i];
+                sum += compressed[i].id * id;
 
-            id++;
+                id++;
+            }
+        }else {
+            id = id + compressed[i].length;
         }
     }
 
