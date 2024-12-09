@@ -65,7 +65,11 @@ void decode() {
 void compress() {
     for (int i = 0; i < decoded.size(); i++) {
         if (decoded[i].id == -1) {
-            for (int k = 0; k < decoded[i].length; k++) {
+            int blockcounter = 0;
+
+            while (decoded[i].length > 0) {
+                int k = decoded[i].length;
+
                 int j = decoded.size() - 1;
                 int found = -1;
 
@@ -85,11 +89,21 @@ void compress() {
                         compressed.push_back(decoded[found]);
                         k = k + decoded[found].length - 1;
                         decoded.erase(decoded.begin() + found);
+                        blockcounter = k;
                     }else {
-                        int used = decoded[i].length - k;
-                        compressed.push_back({ decoded[found].id, used });
+                        int used = k;
+                        if (k < decoded[found].length) {
+                            compressed.push_back({ decoded[found].id, k });
+                            blockcounter = k;
+                            decoded[i].length -= k;
+                        }else {
+                            compressed.push_back({ decoded[found].id, decoded[found].length });
+                            blockcounter += decoded[found].length ;
+                            decoded[i].length -= decoded[found].length;
+                        }
+
                         decoded[found].length -= used;
-                        if (decoded[found].length == 0) {
+                        if (decoded[found].length <= 0) {
                             decoded.erase(decoded.begin() + found);
                         }
                     }
@@ -100,7 +114,7 @@ void compress() {
             compressed.push_back(decoded[i]);
         }
 
-        /*for(auto f : decoded) {
+        for(auto f : decoded) {
             if (f.id != -1) {
                 for (int i = 0; i < f.length; i++) {
                     std::cout << f.id;
@@ -111,9 +125,9 @@ void compress() {
                 }
             }
         }
-        std::cout << std::endl;*/
+        std::cout << std::endl;
 
-        /*for(auto f : compressed) {
+        for(auto f : compressed) {
             if (f.id != -1) {
                 for (int i = 0; i < f.length; i++) {
                     std::cout << f.id;
@@ -124,15 +138,21 @@ void compress() {
                 }
             }
         }
-        std::cout << std::endl;*/
+        std::cout << std::endl;
     }
 }
 
 long long checksum() {
     long long sum = 0;
-    int id = 0;
-    int i = 0;
+    int id=0;
 
+    for (int i = 0; i < compressed.size(); i++) {
+        for (int k = 0; k <= compressed[i].length; k++) {
+            sum += compressed[i].id * id;
+
+            id++;
+        }
+    }
 
     return sum;
 }
@@ -142,7 +162,7 @@ int main() {
     parseInput();
     std::cout << "Length: " << drive.size() << std::endl;
     //calculate();
-    //print();
+    print();
     std::cout << "Decoding" << std::endl;
     decode();
     std::cout << "Length: " << decoded.size() << std::endl;
