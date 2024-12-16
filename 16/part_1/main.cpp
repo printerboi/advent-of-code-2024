@@ -10,6 +10,7 @@
 #include <bits/stdc++.h>
 #include <bitset>
 #include <limits.h>
+#include <queue>
 
 #define FILENAME "input.txt"
 
@@ -20,10 +21,33 @@ std::pair<int, int> start;
 std::pair<int, int> end;
 long globmin = INT_MAX;
 
+std::vector<std::vector<long>> distance;
+std::vector<std::vector<bool>> visited;
+
 enum class DIRECTION {
-    LEFT, RIGHT, UP, DOWN
+    LEFT,
+    RIGHT,
+    UP, DOWN, UNDEFINED
 };
 
+const std::pair<int, int> UP = {-1, 0};
+const std::pair<int, int> DOWN = {1, 0};
+const std::pair<int, int> LEFT = {0, -1};
+const std::pair<int, int> RIGHT = {0, 1};
+
+
+struct Node {
+    int x;
+    int y;
+    int distance;
+    DIRECTION direction;
+};
+
+struct CompareNode {
+    bool operator()(const Node& a, const Node& b) const {
+        return a.distance > b.distance; // Min-heap (smallest distance has highest priority)
+    }
+};
 
 void parseInput() {
     std::ifstream file(FILENAME);
@@ -65,38 +89,12 @@ void printMap(std::vector<std::vector<char>> map) {
     std::cout << std::endl;
 }
 
-void printPath(std::vector<std::vector<bool>> locmap) {
-    for (int i = 0; i < locmap.size(); i++) {
-        for (int j = 0; j < locmap[i].size(); j++) {
-            if (locmap[i][j]) {
-                std::cout << "█";
-            }else if (map[i][j] == '#') {
-                std::cout << '#';
-            }else {
-                std::cout << '.';
-            }
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
-
 void printStartPos() {
     std::cout << "Start at: (" << start.first << ", " << start.second << ")" << std::endl;
 }
 
 void printEndPos() {
     std::cout << "End at: (" << end.first << ", " << end.second << ")" << std::endl;
-}
-
-bool nodeVisited(std::vector<std::pair<int, int>> &preds, std::pair<int, int> node) {
-    for (auto n : preds) {
-        if (node.first == n.first && node.second == n.second) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 long findShortestPath(std::pair<int, int> pos, DIRECTION dir, std::vector<std::vector<bool>> &preds, long steps) {
@@ -163,19 +161,200 @@ long findShortestPath(std::pair<int, int> pos, DIRECTION dir, std::vector<std::v
     return min;
 }
 
-long findShortestIterativPath() {
-    std::vector<std::pair<int, int>> nodelist = { start };
+int findMinDist(std::vector<int> distance, std::vector<bool> visited) {
+    int min = INT_MAX;
+    int minIndex = 0;
 
-    while (nodelist.size() > 0) {
-        std::pair<int, int> node = nodelist.front();
+    for (int i = 0; i < distance.size(); i++) {
+        if (visited[distance[i]] && distance[i] < min) {
+            min = distance[i];
+            minIndex = i;
+        }
+    }
 
-        if (map[node.first][node.second] == 'E') {
-            break;
+    return minIndex;
+}
+
+std::vector<std::vector<int>>  findShortestIterativPath() {
+    std::priority_queue<
+        Node, // Type of elements
+        std::vector<Node>, // Container
+        CompareNode // Min-Heap (smallest priority first)
+    > queue;
+    std::vector<std::vector<int>> distance(map.size(), std::vector<int>(map.size(), INT_MAX));
+
+    queue.push({
+        start.second, start.first, 0, DIRECTION::RIGHT
+    });
+
+    while (!queue.empty()) {
+        Node node = queue.top();
+        queue.pop();
+        int currdistance = node.distance;
+
+        if (map[node.y][node.x] == '#') {
+            continue;
         }
 
+        if (map[node.y][node.x] == 'E') {
+            continue;
+        }
 
+        if (currdistance > distance[node.y][node.x]) {
+            continue;
+        }
 
+        if (node.direction == DIRECTION::RIGHT) {
+            if (node.distance + 1 < distance[node.y][node.x+1]) {
+                distance[node.y][node.x+1] = currdistance + 1;
+                queue.push({
+                        node.x+1,
+                        node.y,
+                        node.distance + 1,
+                        node.direction,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y+1][node.x]) {
+                distance[node.y+1][node.x] = currdistance + 1001;
+                queue.push({
+                        node.x,
+                        node.y+1,
+                        node.distance + 1001,
+                        DIRECTION::DOWN,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y-1][node.x]) {
+                distance[node.y-1][node.x] = currdistance + 1001;
+                queue.push(
+                    {
+                        node.x,
+                        node.y-1,
+                        node.distance + 1001,
+                        DIRECTION::UP,
+                    }
+                );
+            }
+        }
+
+        if (node.direction == DIRECTION::LEFT) {
+            if (node.distance + 1 < distance[node.y][node.x-1]) {
+                distance[node.y][node.x-1] = currdistance + 1;
+                queue.push(
+                    {
+                        node.x-1,
+                        node.y,
+                        node.distance + 1,
+                        node.direction,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y+1][node.x]) {
+                distance[node.y+1][node.x] = currdistance + 1001;
+                queue.push(
+                    {
+                        node.x,
+                        node.y+1,
+                        node.distance + 1001,
+                        DIRECTION::DOWN,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y-1][node.x]) {
+                distance[node.y-1][node.x] = currdistance + 1001;
+                queue.push(
+                    {
+                        node.x,
+                        node.y-1,
+                        node.distance + 1001,
+                        DIRECTION::UP,
+                    }
+                );
+            }
+        }
+
+        if (node.direction == DIRECTION::UP) {
+            if (node.distance + 1 < distance[node.y-1][node.x]) {
+                distance[node.y-1][node.x] = currdistance + 1;
+                queue.push(
+                    {
+                        node.x,
+                        node.y-1,
+                        node.distance + 1,
+                        node.direction,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y][node.x-1]) {
+                distance[node.y][node.x-1] = currdistance + 1001;
+                queue.push(
+                    {
+                        node.x-1,
+                        node.y,
+                        node.distance + 1001,
+                        DIRECTION::LEFT,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y][node.x+1]) {
+                distance[node.y][node.x+1] = currdistance + 1001;
+                queue.push(
+                    {
+                        node.x+1,
+                        node.y,
+                        node.distance + 1001,
+                        DIRECTION::RIGHT,
+                    }
+                );
+            }
+        }
+
+        if (node.direction == DIRECTION::DOWN) {
+            if (node.distance + 1 < distance[node.y+1][node.x]) {
+                distance[node.y+1][node.x] = currdistance + 1;
+                queue.push(
+                    {
+                        node.x,
+                        node.y+1,
+                        node.distance + 1,
+                        node.direction,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y][node.x-1]) {
+                distance[node.y][node.x-1] = currdistance + 1001;
+                queue.push(
+                    {
+                        node.x-1,
+                        node.y,
+                        node.distance + 1001,
+                        DIRECTION::LEFT,
+                    }
+                );
+            }
+
+            if (node.distance + 1001 < distance[node.y][node.x+1]) {
+                queue.push(
+                    {
+                        node.x+1,
+                        node.y,
+                        node.distance + 1001,
+                        DIRECTION::RIGHT,
+                    }
+                );
+            }
+        }
     }
+
+    return distance;
 }
 
 int main() {
@@ -186,9 +365,9 @@ int main() {
     printStartPos();
     printEndPos();
     std::vector<std::pair<int, int>> nodes;
-    long shortestWay = findShortestPath({ start.first, start.second }, DIRECTION::RIGHT, predsmap, 0);
+    auto mindist = findShortestIterativPath();
 
-    std::cout << "SP with sum: " << shortestWay-1  << std::endl;
+    std::cout << "SP with sum: " << mindist[end.first][end.second]  << std::endl;
 
     return 0;
 }
