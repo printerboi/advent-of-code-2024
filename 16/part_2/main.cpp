@@ -24,6 +24,8 @@ const std::pair<int, int> LEFT = {0, -1};
 const std::pair<int, int> RIGHT = {0, 1};
 
 
+std::vector<std::pair<int, int>> directions = {UP, DOWN, LEFT, RIGHT};
+
 struct Node {
     int x;
     int y;
@@ -91,54 +93,14 @@ void enqNode(int y, int x, std::pair<int, int> orientation, long stepsUpdate, lo
     );
 }
 
-std::pair<int, int> r90(std::pair<int, int> v) {
-    if (v.first == 1 && v.second == 0) {
-        return { 0, -1 };
-    }
-
-    if (v.first == 0 && v.second == -1) {
-         return { -1, 0 };
-    }
-
-    if (v.first == -1 && v.second == 0) {
-         return { 0, 1 };
-    }
-
-    if (v.first == 0 && v.second == 1) {
-         return { 1, 0 };
-    }
-}
-std::pair<int, int> r180(std::pair<int, int> v) {
-    return r90(r90(v));
-}
-
-std::pair<int, int> r90c(std::pair<int, int> v) {
-    if (v.first == 1 && v.second == 0) {
-         return { 0, 1 };
-    }
-
-    if (v.first == 0 && v.second == 1) {
-         return { -1, 0 };
-    }
-
-    if (v.first == -1 && v.second == 0) {
-         return { 0, -1 };
-    }
-
-    if (v.first == 0 && v.second == -1) {
-         return { 1, 0 };
-    }
-}
-
-
-std::vector<std::vector<std::pair<long, std::pair<int, int>>>> findShortestIterativPath() {
+std::vector<std::vector<std::vector<long>>> findShortestIterativPath() {
     std::priority_queue<
         Node, // Type of elements
         std::vector<Node>, // Container
         CompareNode // Min-Heap (smallest priority first)
     > queue;
-    std::vector<std::vector<std::pair<long, std::pair<int, int>>>> distance(map.size(), std::vector<std::pair<long, std::pair<int, int>>>(map.size(), { LONG_MAX, { 0, 1 } }));
-    distance[start.first][start.second] = {0, {0, 1} };
+    std::vector<std::vector<std::vector<long>>> distance(map.size(), std::vector<std::vector<long>>(map.size(), std::vector<long>(directions.size(), LONG_MAX)));
+    distance[start.first][start.second] = {0, {} };
 
     queue.push({
         start.second, start.first, 0, 0, RIGHT
@@ -158,30 +120,37 @@ std::vector<std::vector<std::pair<long, std::pair<int, int>>>> findShortestItera
             continue;
         }
 
-        //std::cout << "Node: (" << node.x << ", " << node.y << ") Distance: " << currdistance << "\n";
+        std::cout << "Node: (" << node.x << ", " << node.y << ") Distance: " << currdistance << "\n";
 
-        if (currdistance + 1 < distance[node.y + node.orientation.first][node.x + node.orientation.second].first) {
-            distance[node.y + node.orientation.first][node.x + node.orientation.second] = { currdistance + 1, node.orientation };
-            enqNode(node.y + node.orientation.first, node.x + node.orientation.second, node.orientation, currsteps + 1, currdistance + 1,  queue);
+        for (int i = 0; i < directions.size(); i++) {
+            Node newNode = {
+                node.x + directions[i].second,
+                node.y + directions[i].first,
+                node.steps + 1,
+                node.distance + 1,
+                directions[i],
+            };
+
+            if (node.orientation != directions[i]) {
+                newNode.distance += 1000;
+            }
+
+            if (map[newNode.y][newNode.x] == '#') {
+                continue;
+            }
+
+            if (newNode.distance < distance[newNode.y][newNode.x][i]) {
+                distance[newNode.y][newNode.x][i] = newNode.distance;
+                queue.push(newNode);
+            }
         }
 
-        auto ori90 = r90(node.orientation);
-        if (currdistance + 1001 < distance[node.y + ori90.first][node.x + ori90.second].first) {
-            distance[node.y + ori90.first][node.x + ori90.second] = { currdistance + 1001, ori90 };
-            enqNode(node.y + ori90.first, node.x + ori90.second, ori90, currsteps + 1, currdistance + 1001, queue);
-        }
-
-        auto ori90c = r90c(node.orientation);
-        if (currdistance + 1001 < distance[node.y + ori90c.first][node.x + ori90c.second].first) {
-            distance[node.y + ori90c.first][node.x + ori90c.second] = { currdistance + 1001, ori90c };
-            enqNode(node.y + ori90c.first, node.x + ori90c.second, ori90c, currsteps + 1, currdistance + 1001, queue);
-        }
     }
 
     return distance;
 }
 
-long tracePaths(std::vector<std::vector<std::pair<long, std::pair<int, int>>>> distances) {
+long tracePaths(std::vector<std::vector<std::vector<long>>> distance) {
     std::vector<std::vector<char>> traces(map.size(), std::vector<char>(map.size(), '.'));
     long count = 0;
 
@@ -191,18 +160,11 @@ long tracePaths(std::vector<std::vector<std::pair<long, std::pair<int, int>>>> d
         CompareNode // Min-Heap (smallest priority first)
     > queue;
 
-    /*if (distances[end.first - 1][end.second].first < distances[end.first][end.second-1].first) {
-        queue.push({
-            end.second, end.first, 0, distances[end.first][end.second].first, DOWN
-        });
-    }else {
-        queue.push({
-            end.second, end.first, 0, distances[end.first][end.second].first, LEFT
-        });
-    }*/
+    auto minval = std::min_element(distance[start.first][start.second].begin(), distance[start.first][start.second].end());
+    long minIndex = std::distance(distance[start.first][start.second].begin(),  minval);
 
     queue.push({
-        end.second, end.first, 0, distances[end.first][end.second].first, DOWN
+        end.second, end.first, 0, distance[end.first][end.second][minIndex], directions[minIndex]
     });
 
     while (!queue.empty()) {
@@ -211,7 +173,6 @@ long tracePaths(std::vector<std::vector<std::pair<long, std::pair<int, int>>>> d
 
         long currdistance = node.distance;
         long currsteps = node.steps;
-        int i = 0;
 
         if (map[node.y][node.x] == '#') {
             continue;
@@ -223,36 +184,33 @@ long tracePaths(std::vector<std::vector<std::pair<long, std::pair<int, int>>>> d
 
         std::cout << "Node: (" << node.x << ", " << node.y << ") Distance: " << currdistance << " Dir: " << node.orientation.first << ", " << node.orientation.second << "\n";
 
-        if (currdistance - 1 == distances[node.y + node.orientation.first][node.x + node.orientation.second].first) {
-            traces[node.y + node.orientation.first][node.x + node.orientation.second] = 'O';
-            enqNode(node.y + node.orientation.first, node.x + node.orientation.second, node.orientation, currsteps + 1, currdistance - 1,  queue);
+        for (int i = 0; i < directions.size(); i++) {
+            long dist = node.distance - 1;
+
+            if (node.orientation != directions[i]) {
+                dist -= 1000;
+            }
+
+            Node newNode = {
+                node.x + node.orientation.second * -1,
+                node.y + node.orientation.first * -1,
+                node.steps + 1,
+                dist,
+                directions[i]
+            };
+
+            if (map[newNode.y][newNode.x] == '#') {
+                continue;
+            }
+
+            long minDist = distance[newNode.y][newNode.x][i];
+
+            if (newNode.distance == minDist) {
+                distance[newNode.y][newNode.x][i] = newNode.distance;
+                traces[newNode.y][newNode.x] = 'O';
+                queue.push(newNode);
+            }
         }
-
-        if ( currdistance - 1001 == distances[node.y + node.orientation.first][node.x + node.orientation.second].first) {
-            auto ori90 = r90c(node.orientation);
-            traces[node.y + node.orientation.first][node.x + node.orientation.second] = 'O';
-            enqNode(node.y + node.orientation.first, node.x + node.orientation.second, ori90, currsteps + 1, currdistance - 1001, queue);
-        }
-
-        /*if ( currdistance + 999 == distances[node.y + r90(node.orientation).first][node.x + r90(node.orientation).second].first) {
-            auto ori90 = r90(node.orientation);
-            traces[node.y + r90(node.orientation).first][node.x + r90(node.orientation).second] = 'O';
-            enqNode(node.y + r90(node.orientation).first, node.x + r90(node.orientation).second, ori90, currsteps + 1, currdistance + 999, queue);
-        }*/
-
-        if (currdistance - 1001 == distances[node.y + node.orientation.first][node.x + node.orientation.second].first) {
-            auto ori90c = r90(node.orientation);
-            traces[node.y + node.orientation.first][node.x + node.orientation.second] = 'O';
-            enqNode(node.y + node.orientation.first, node.x + node.orientation.second, ori90c, currsteps + 1, currdistance - 1001, queue);
-        }
-
-        /*if ( currdistance + 999 == distances[node.y + r90c(node.orientation).first][node.x + r90c(node.orientation).second].first) {
-            auto oric90 = r90c(node.orientation);
-            traces[node.y + r90c(node.orientation).first][node.x + r90c(node.orientation).second] = 'O';
-            enqNode(node.y + r90c(node.orientation).first, node.x + r90c(node.orientation).second, oric90, currsteps + 1, currdistance + 999, queue);
-        }*/
-
-        i++;
     }
 
     for (int i = 0; i < map.size(); i++) {
@@ -282,7 +240,7 @@ int main() {
     auto mindist = findShortestIterativPath();
     auto paths = tracePaths(mindist);
 
-    std::cout << "SP with sum: " << paths+1  << std::endl;
+    std::cout << "SP with sum: " << paths + 1  << std::endl;
 
     return 0;
 }
